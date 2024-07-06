@@ -1,25 +1,38 @@
 import express, { Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import routes from "./routes/v1";
+import httpStatus from "http-status";
+import ApiError from "./utils/ApiError";
+import { errorConverter, errorHandler } from "./middlewares/error";
 
 // Create an instance of Express
 const app = express();
 
-// Middleware to parse JSON requests
+// set security HTTP headers
+app.use(helmet());
+
+// parse json request body
 app.use(express.json());
 
-// Basic route for the root
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello, World!");
+// parse urlencoded request body
+app.use(express.urlencoded({ extended: true }));
+/* 
+// jwt authentication
+app.use(passport.initialize());
+passport.use("jwt", jwtStrategy); */
+
+// v1 api routes
+app.use("/v1", routes);
+
+// send back a 404 error for any unknown api request
+app.use((req, res, next) => {
+  next(new ApiError(httpStatus.NOT_FOUND, "Not found"));
 });
 
-// Example of another route
-app.get("/api/example", (req: Request, res: Response) => {
-  res.json({ message: "This is an example endpoint!" });
-});
+// convert error to ApiError, if needed
+app.use(errorConverter);
 
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send("Something went wrong!");
-});
+// handle error
+app.use(errorHandler);
 
 export default app;
