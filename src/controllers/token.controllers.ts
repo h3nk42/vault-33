@@ -22,12 +22,12 @@ const tokenize = catchAsync(async (req, res) => {
 
 const detokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body;
-  const retrievedData: { [key: string]: any } = {};
+  const retrievedData: { [key: string]: { found: boolean; value: any } } = {};
   Object.keys(data).forEach((key) => {
     if (!tokenMemory[key] || tokenMemory[key].tokenId !== data[key]) {
-      retrievedData[key] = "invalid token";
+      retrievedData[key] = { found: false, value: null };
     } else {
-      retrievedData[key] = tokenMemory[key].value;
+      retrievedData[key] = { found: true, value: tokenMemory[key].value };
     }
   });
   res.send({ id, data: retrievedData });
