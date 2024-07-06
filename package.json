@@ -1,0 +1,11 @@
+{
+  "name": "vault-33",
+  "version": "1.0.0",
+  "description": "Zasta DPV challenge",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Henk Lucas van der Sloot",
+  "license": "ISC"
+}
