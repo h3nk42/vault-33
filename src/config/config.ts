@@ -10,6 +10,7 @@ const envVarsSchema = Joi.object()
       .valid("production", "development", "test")
       .required(),
     PORT: Joi.number().default(3000),
+    ENCRYPTION_KEY: Joi.string().required().description("Encryption key"),
     /*  MONGODB_URL: Joi.string().required().description("Mongo DB url"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
@@ -38,9 +39,10 @@ const { value: envVars, error } = envVarsSchema
   .prefs({ errors: { label: "key" } })
   .validate(process.env);
 
-export default {
-  env: envVars.NODE_ENV,
-  port: envVars.PORT,
+export const env = {
+  env: envVars.NODE_ENV as "production" | "development" | "test",
+  port: envVars.PORT as number,
+  encryptionKey: envVars.ENCRYPTION_KEY as string,
   /* mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === "test" ? "-test" : ""),
     options: {

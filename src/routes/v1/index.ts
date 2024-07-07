@@ -1,7 +1,7 @@
 import express from "express";
 import tokenRouter from "./token.route";
 import docsRoute from "./docs.route";
-import config from "../../config/config";
+import { env } from "../../config/config";
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ defaultRoutes.forEach((route) => {
   router.use(route.path, route.route);
 });
 
-if (config.env === "development") {
+if (env.env === "development") {
   devRoutes.forEach((route) => {
     router.use(route.path, route.route);
   });

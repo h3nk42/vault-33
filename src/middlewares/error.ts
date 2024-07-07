@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import config from "../config/config";
+import { env } from "../config/config";
 import logger from "../config/logger";
 import ApiError from "../utils/ApiError";
 import { Request, Response, NextFunction } from "express";
@@ -44,7 +44,7 @@ const errorHandler = (
   next: NextFunction
 ): void => {
   let { statusCode, message } = err;
-  if (config.env === "production" && !err.isOperational) {
+  if (env.env === "production" && !err.isOperational) {
     statusCode = httpStatus.INTERNAL_SERVER_ERROR;
     message = httpStatus[httpStatus.INTERNAL_SERVER_ERROR];
   }
@@ -54,10 +54,10 @@ const errorHandler = (
   const response = {
     code: statusCode,
     message,
-    ...(config.env === "development" && { stack: err.stack }),
+    ...(env.env === "development" && { stack: err.stack }),
   };
 
-  if (config.env === "development") {
+  if (env.env === "development") {
     logger.error(err);
   }
 

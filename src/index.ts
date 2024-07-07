@@ -1,17 +1,20 @@
-import app from "./app";
+import app, { dataTokenRedisClient } from "./app";
 import logger from "./config/logger";
-import config from "./config/config";
+import { env } from "./config/config";
+
 let server;
 
 // Start the Express server
-server = app.listen(config.port, () => {
-  console.log(`Server is running on port ${config.port}`);
+server = app.listen(env.port, () => {
+  console.log(`Server is running on port ${env.port}`);
 });
 
 const exitHandler = () => {
   if (server) {
-    server.close(() => {
+    server.close(async () => {
       logger.info("Server closed");
+      // Disconnect from Redis when the server closes
+      await dataTokenRedisClient.disconnect();
       process.exit(1);
     });
   } else {
@@ -27,9 +30,11 @@ const unexpectedErrorHandler = (error: any) => {
 process.on("uncaughtException", unexpectedErrorHandler);
 process.on("unhandledRejection", unexpectedErrorHandler);
 
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   logger.info("SIGTERM received");
   if (server) {
     server.close();
   }
+  // Ensure Redis client disconnects on SIGTERM
+  await dataTokenRedisClient.disconnect();
 });

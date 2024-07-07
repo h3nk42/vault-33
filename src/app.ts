@@ -4,6 +4,23 @@ import routes from "./routes/v1";
 import httpStatus from "http-status";
 import ApiError from "./utils/ApiError";
 import { errorConverter, errorHandler } from "./middlewares/error";
+import { createClient } from "redis";
+import logger from "./config/logger";
+
+export const dataTokenRedisClient = createClient({
+  url: "redis://localhost:6379", // Update this with your Redis server URL
+  database: 0,
+});
+
+dataTokenRedisClient.on("error", (err) =>
+  logger.error("Redis Client Error", err)
+);
+dataTokenRedisClient.on("connect", () => logger.info("Connected to Redis"));
+
+// Connect to Redis
+(async () => {
+  await dataTokenRedisClient.connect();
+})();
 
 // Create an instance of Express
 const app = express();
