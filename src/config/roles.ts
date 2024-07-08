@@ -21,6 +21,7 @@ const roleNames = {
 } as const;
 
 const roles = Object.values(roleNames);
+type Role = (typeof roles)[number];
 
 export const roleDefinitions: { [key: string]: string[] } = {
   service: [
@@ -34,4 +35,4 @@ export const roleDefinitions: { [key: string]: string[] } = {
 
 const roleRights = new Map(Object.entries(roleDefinitions).map((x) => x));
 
-export { roles, roleRights };
+export { roles, Role, roleRights };

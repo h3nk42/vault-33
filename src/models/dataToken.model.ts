@@ -3,11 +3,13 @@ import Joi from "joi";
 export type DataTokenInStore = {
   tokenId: string;
   value: any;
+  creator: string;
 };
 
 export const dataTokenInStoreSchema = Joi.object().keys({
   tokenId: Joi.string().required(),
   value: Joi.string().required(),
+  creator: Joi.string().required(),
 });
 
 export const isDataToken = (data: any): data is DataTokenInStore => {

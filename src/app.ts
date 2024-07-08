@@ -7,7 +7,7 @@ import { errorConverter, errorHandler } from "./middlewares/error";
 import { createClient } from "redis";
 import logger from "./config/logger";
 import passport from "passport";
-import { jwtStrategy } from "./config/passport";
+import { apiKeyStrategy, jwtStrategy } from "./config/passport";
 
 export const dataTokenRedisClient = createClient({
   url: "redis://localhost:6379", // Update this with your Redis server URL
@@ -48,6 +48,7 @@ app.use(express.urlencoded({ extended: true }));
 // jwt authentication
 app.use(passport.initialize());
 passport.use("jwt", jwtStrategy);
+passport.use("api-key", apiKeyStrategy);
 
 // v1 api routes
 app.use("/v1", routes);

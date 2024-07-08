@@ -6,6 +6,8 @@ import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
 import logger from "../config/logger";
 import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
+import ApiError from "../utils/ApiError";
+import httpStatus from "http-status";
 
 /**
  * The `tokenize` function is an asynchronous controller for tokenizing provided data and storing it in Redis.
@@ -32,9 +34,14 @@ import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 const tokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body as TokenizeBody;
   const addedData: { [key: string]: any } = {};
+  const apiKey = req.headers["x-api-key"] as string;
   const operations = Object.keys(data).map(async (key) => {
     const tokenId = uuidv4();
-    const tokenDataForStore: DataTokenInStore = { tokenId, value: data[key] };
+    const tokenDataForStore: DataTokenInStore = {
+      tokenId,
+      value: data[key],
+      creator: apiKey,
+    };
     const encryptedTokenData = encrypt(tokenDataForStore, env.encryptionKey);
     await dataTokenRedisClient.set(key, JSON.stringify(encryptedTokenData));
     logger.debug(`Stored tokenized data for key ${key}`);
@@ -44,6 +51,8 @@ const tokenize = catchAsync(async (req, res) => {
 
   res.send({ id, data: addedData });
 });
+
+const workOnDecryption = catchAsync(async (req, res) => {});
 
 /**
  * The `detokenize` function asynchronously processes a request to convert tokenized data back to its original form.
@@ -71,28 +80,35 @@ const tokenize = catchAsync(async (req, res) => {
 const detokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body as TokenizeBody;
   const retrievedData: { [key: string]: { found: boolean; value: any } } = {};
-
   const decryptionTasks = Object.keys(data).map(async (key) => {
-    const encryptedValue = await dataTokenRedisClient.get(key);
-    if (!encryptedValue) {
-      return { key, result: { found: false, value: null } };
-    }
-
     try {
+      const encryptedValue = await dataTokenRedisClient.get(key);
+      if (!encryptedValue) {
+        return { key, result: { found: false, value: null } };
+      }
+
       const encryptedJsonData = JSON.parse(encryptedValue);
       const decryptedValue = decrypt(encryptedJsonData, env.encryptionKey);
 
-      if (
-        isDataToken(decryptedValue) &&
-        decryptedValue?.tokenId === data[key]
-      ) {
+      if (!isDataToken(decryptedValue)) {
+        return { key, result: { found: false, value: null } };
+      }
+
+      if (decryptedValue.creator !== req.headers["x-api-key"]) {
+        throw new ApiError(
+          httpStatus.UNAUTHORIZED,
+          `Not allowed to read key ${key}`
+        );
+      }
+
+      if (decryptedValue?.tokenId === data[key]) {
         return { key, result: { found: true, value: decryptedValue.value } };
       }
-    } catch (error) {
-      console.error(`Error decrypting data for key ${key}:`, error);
-    }
 
-    return { key, result: { found: false, value: null } };
+      return { key, result: { found: false, value: null } };
+    } catch (error) {
+      throw error; // This will be caught by catchAsync
+    }
   });
 
   const results = await Promise.all(decryptionTasks);

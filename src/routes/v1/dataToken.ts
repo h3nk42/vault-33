@@ -2,18 +2,22 @@ import express from "express";
 import { tokenValidation } from "../../validations/token.validation";
 import { tokenController } from "../../controllers/dataToken.controllers";
 import { validate } from "../../middlewares/validate";
+import { authApiKey } from "../../middlewares/auth/authApiKey";
+import { allPriviliges } from "../../config/roles";
 
 const dataTokenRouter = express.Router();
 
 dataTokenRouter.post(
   "/tokenize",
   validate(tokenValidation.tokenize),
+  authApiKey(allPriviliges.dataToken.tokenize),
   tokenController.tokenize
 );
 
 dataTokenRouter.post(
   "/detokenize",
   validate(tokenValidation.detokenize),
+  authApiKey(allPriviliges.dataToken.detokenize),
   tokenController.detokenize
 );
 

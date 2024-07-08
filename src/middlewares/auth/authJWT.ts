@@ -1,7 +1,7 @@
 import passport from "passport";
 import httpStatus from "http-status";
-import ApiError from "../utils/ApiError";
-import { roleDefinitions } from "../config/roles";
+import ApiError from "../../utils/ApiError";
+import { roleDefinitions } from "../../config/roles";
 import { NextFunction, Request, Response } from "express";
 
 /**
@@ -20,23 +20,25 @@ type VerifyCallback = (
   req: Request,
   resolve: (value?: unknown) => void,
   reject: (error: ApiError) => void,
-  requiredRights: string[]
+  requiredPriviliges: string[]
 ) => (err: any, user: any, info: any) => Promise<void>;
 
-const verifyCallback: VerifyCallback =
-  (req, resolve, reject, requiredRights) => async (err, user, info) => {
+const checkRolesJWT: VerifyCallback =
+  (req, resolve, reject, requiredPriviliges) => async (err, user, info) => {
     if (err || info || !user) {
       return reject(
         new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")
       );
     }
 
-    if (requiredRights.length) {
+    if (requiredPriviliges.length) {
       const userRights = roleDefinitions.admin;
-      const hasRequiredRights = requiredRights.every((requiredRight) => {
-        return userRights?.includes(requiredRight);
-      });
-      if (!hasRequiredRights) {
+      const hasRequiredPriviliges = requiredPriviliges.every(
+        (requiredPrivilige) => {
+          return userRights?.includes(requiredPrivilige);
+        }
+      );
+      if (!hasRequiredPriviliges) {
         return reject(new ApiError(httpStatus.FORBIDDEN, "Forbidden"));
       }
     }
@@ -50,10 +52,10 @@ const verifyCallback: VerifyCallback =
  * This middleware uses Passport to authenticate a JWT token. If authentication is successful,
  * it checks if the authenticated user has the required rights to access the endpoint.
  *
- * @param {...string[]} requiredRights - An array of strings representing the rights required to access the endpoint.
+ * @param {...string[]} requiredPriviliges - An array of strings representing the rights required to access the endpoint.
  * @returns An Express middleware function that handles the authentication and authorization process.
  */
-export const auth = (...requiredRights: string[]) => {
+export const authJWT = (...requiredPriviliges: string[]) => {
   return async (
     req: Request,
     res: Response,
@@ -63,7 +65,7 @@ export const auth = (...requiredRights: string[]) => {
       passport.authenticate(
         "jwt",
         { session: false },
-        verifyCallback(req, resolve, reject, requiredRights)
+        checkRolesJWT(req, resolve, reject, requiredPriviliges)
       )(req, res, next);
     })
       .then(() => next())
