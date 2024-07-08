@@ -1,4 +1,9 @@
-import { randomBytes, createCipheriv, createDecipheriv } from "crypto";
+import {
+  randomBytes,
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+} from "crypto";
 
 /**
  * Encrypts a given string or object using AES-256-CBC algorithm and a secret key.
@@ -58,3 +63,9 @@ export const decrypt = (
     return decrypted;
   }
 };
+
+export function hash(value: string): string {
+  const hash = createHash("sha256");
+  hash.update(value);
+  return hash.digest("hex");
+}

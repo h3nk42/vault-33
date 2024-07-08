@@ -1,7 +1,8 @@
-const { version } = require("../../package.json");
-const config = require("../config/config");
+import { env } from "../config/config";
 
-const swaggerDef = {
+const { version } = require("../../package.json");
+
+export const swaggerDef = {
   openapi: "3.0.0",
   info: {
     title: "Zasta DPV challenge",
@@ -13,9 +14,7 @@ const swaggerDef = {
   },
   servers: [
     {
-      url: `http://localhost:${config.port}/v1`,
+      url: `http://localhost:${env.port}/v1`,
     },
   ],
 };
-
-module.exports = swaggerDef;

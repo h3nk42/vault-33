@@ -11,6 +11,11 @@ const envVarsSchema = Joi.object()
       .required(),
     PORT: Joi.number().default(3000),
     ENCRYPTION_KEY: Joi.string().required().description("Encryption key"),
+    JWT_SECRET: Joi.string().required().description("JWT secret key"),
+    JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30),
+    ADMIN_ID: Joi.string().required().description("Admin ID"),
+    ADMIN_PASSWORD: Joi.string().required().description("Admin password"),
+
     /*  MONGODB_URL: Joi.string().required().description("Mongo DB url"),
     JWT_SECRET: Joi.string().required().description("JWT secret key"),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number()
@@ -43,6 +48,14 @@ export const env = {
   env: envVars.NODE_ENV as "production" | "development" | "test",
   port: envVars.PORT as number,
   encryptionKey: envVars.ENCRYPTION_KEY as string,
+  jwt: {
+    secret: envVars.JWT_SECRET,
+    accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
+  },
+  admin: {
+    id: envVars.ADMIN_ID,
+    password: envVars.ADMIN_PASSWORD,
+  },
   /* mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === "test" ? "-test" : ""),
     options: {

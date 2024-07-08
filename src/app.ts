@@ -6,6 +6,8 @@ import ApiError from "./utils/ApiError";
 import { errorConverter, errorHandler } from "./middlewares/error";
 import { createClient } from "redis";
 import logger from "./config/logger";
+import passport from "passport";
+import { jwtStrategy } from "./config/passport";
 
 export const dataTokenRedisClient = createClient({
   url: "redis://localhost:6379", // Update this with your Redis server URL
@@ -17,9 +19,18 @@ dataTokenRedisClient.on("error", (err) =>
 );
 dataTokenRedisClient.on("connect", () => logger.info("Connected to Redis"));
 
+export const apiKeyRedisClient = createClient({
+  url: "redis://localhost:6379", // Update this with your Redis server URL
+  database: 1,
+});
+
+apiKeyRedisClient.on("error", (err) => logger.error("Redis Client Error", err));
+apiKeyRedisClient.on("connect", () => logger.info("Connected to Redis"));
+
 // Connect to Redis
 (async () => {
   await dataTokenRedisClient.connect();
+  await apiKeyRedisClient.connect();
 })();
 
 // Create an instance of Express
@@ -33,10 +44,10 @@ app.use(express.json());
 
 // parse urlencoded request body
 app.use(express.urlencoded({ extended: true }));
-/* 
+
 // jwt authentication
 app.use(passport.initialize());
-passport.use("jwt", jwtStrategy); */
+passport.use("jwt", jwtStrategy);
 
 // v1 api routes
 app.use("/v1", routes);

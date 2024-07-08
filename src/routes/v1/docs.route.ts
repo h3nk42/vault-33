@@ -1,12 +1,13 @@
+import { swaggerDef } from "../../docs/swaggerDef";
+
 const express = require("express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDefinition = require("../../docs/swaggerDef");
 
-const docsRouter = express.Router();
+export const docsRouter = express.Router();
 
 const specs = swaggerJsdoc({
-  swaggerDefinition,
+  swaggerDefinition: swaggerDef,
   apis: ["src/docs/*.yml", "src/routes/v1/*.ts"],
 });
 
@@ -17,5 +18,3 @@ docsRouter.get(
     explorer: true,
   })
 );
-
-export default docsRouter;

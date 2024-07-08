@@ -3,10 +3,9 @@ import catchAsync from "../utils/catchAsync";
 import { v4 as uuidv4 } from "uuid";
 import { decrypt, encrypt } from "../utils/crypto";
 import { env } from "../config/config";
-import { promisify } from "util";
 import { TokenizeBody } from "../validations/token.validation";
-import { isTokenData, TokenDataInStore } from "../models/token.model";
 import logger from "../config/logger";
+import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 
 /**
  * The `tokenize` function is an asynchronous controller for tokenizing provided data and storing it in Redis.
@@ -35,7 +34,7 @@ const tokenize = catchAsync(async (req, res) => {
   const addedData: { [key: string]: any } = {};
   const operations = Object.keys(data).map(async (key) => {
     const tokenId = uuidv4();
-    const tokenDataForStore: TokenDataInStore = { tokenId, value: data[key] };
+    const tokenDataForStore: DataTokenInStore = { tokenId, value: data[key] };
     const encryptedTokenData = encrypt(tokenDataForStore, env.encryptionKey);
     await dataTokenRedisClient.set(key, JSON.stringify(encryptedTokenData));
     logger.debug(`Stored tokenized data for key ${key}`);
@@ -84,7 +83,7 @@ const detokenize = catchAsync(async (req, res) => {
       const decryptedValue = decrypt(encryptedJsonData, env.encryptionKey);
 
       if (
-        isTokenData(decryptedValue) &&
+        isDataToken(decryptedValue) &&
         decryptedValue?.tokenId === data[key]
       ) {
         return { key, result: { found: true, value: decryptedValue.value } };

@@ -1,4 +1,4 @@
-import app, { dataTokenRedisClient } from "./app";
+import app, { apiKeyRedisClient, dataTokenRedisClient } from "./app";
 import logger from "./config/logger";
 import { env } from "./config/config";
 
@@ -15,6 +15,7 @@ const exitHandler = () => {
       logger.info("Server closed");
       // Disconnect from Redis when the server closes
       await dataTokenRedisClient.disconnect();
+      await apiKeyRedisClient.disconnect();
       process.exit(1);
     });
   } else {
@@ -37,4 +38,5 @@ process.on("SIGTERM", async () => {
   }
   // Ensure Redis client disconnects on SIGTERM
   await dataTokenRedisClient.disconnect();
+  await apiKeyRedisClient.disconnect();
 });

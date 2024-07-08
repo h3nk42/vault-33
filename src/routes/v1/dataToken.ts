@@ -1,23 +1,23 @@
 import express from "express";
 import { tokenValidation } from "../../validations/token.validation";
-import { tokenController } from "../../controllers/token.controllers";
-import validate from "../../middlewares/validate";
+import { tokenController } from "../../controllers/dataToken.controllers";
+import { validate } from "../../middlewares/validate";
 
-const tokenRouter = express.Router();
+const dataTokenRouter = express.Router();
 
-tokenRouter.post(
+dataTokenRouter.post(
   "/tokenize",
   validate(tokenValidation.tokenize),
   tokenController.tokenize
 );
 
-tokenRouter.post(
+dataTokenRouter.post(
   "/detokenize",
   validate(tokenValidation.detokenize),
   tokenController.detokenize
 );
 
-export default tokenRouter;
+export default dataTokenRouter;
 /**
  * @swagger
  * tags:
