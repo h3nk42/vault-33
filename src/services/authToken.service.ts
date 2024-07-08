@@ -3,7 +3,6 @@ import { AuthTokenType, authTokenTypes } from "../config/token";
 import { env } from "../config/config";
 import moment from "moment";
 import jwt from "jsonwebtoken";
-import { AuthToken } from "../models/authToken.model";
 
 /**
  * Generate token
