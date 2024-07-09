@@ -2,7 +2,7 @@ import { decrypt, encrypt, hash } from "./crypto";
 import { RedisClientName } from "../config/redis.config";
 import { redisClients } from "../app";
 
- const storeAndEncrypt = async (
+const storeAndEncrypt = async (
   key: string,
   data: any,
   encryptionKey: string,
@@ -13,7 +13,7 @@ import { redisClients } from "../app";
   return;
 };
 
- const retrieveAndDecrypt = async (
+const retrieveAndDecrypt = async (
   key: string,
   encryptionKey: string,
   client: RedisClientName
@@ -27,7 +27,7 @@ import { redisClients } from "../app";
   return decryptedValue;
 };
 
- const storeHashedAndEncrypt = async (
+const storeHashedAndEncrypt = async (
   key: string,
   data: any,
   encryptionKey: string,
@@ -38,7 +38,7 @@ import { redisClients } from "../app";
   return;
 };
 
- const retrieveHashedAndDecrypt = async (
+const retrieveHashedAndDecrypt = async (
   key: string,
   encryptionKey: string,
   client: RedisClientName
@@ -47,12 +47,9 @@ import { redisClients } from "../app";
   return await retrieveAndDecrypt(hashedKey, encryptionKey, client);
 };
 
-
 export const redisUtils = {
   storeAndEncrypt,
   retrieveAndDecrypt,
   storeHashedAndEncrypt,
   retrieveHashedAndDecrypt,
 };
-
-}
