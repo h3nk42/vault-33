@@ -1,9 +1,9 @@
 import express from "express";
-import dataTokenRouter from "./dataToken";
 import { docsRouter } from "./docs.route";
 import { env } from "../../config/config";
 import { authRouter } from "./auth.route";
 import { apiKeyRouter } from "./apiKey.route";
+import dataTokenRouter from "./dataToken.route";
 
 const router = express.Router();
 

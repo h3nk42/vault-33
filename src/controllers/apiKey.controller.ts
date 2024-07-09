@@ -9,6 +9,7 @@ import { v4 } from "uuid";
 import { encrypt, hash } from "../utils/crypto";
 import { env } from "../config/config";
 import { apiKeyRedisClient } from "../app";
+import ApiError from "../utils/ApiError";
 
 const createApiKey = catchAsync(async (req: Request, res: Response) => {
   const { roles } = req.body as CreateApiKeyBody;
@@ -26,6 +27,7 @@ const createApiKey = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteApiKey = catchAsync(async (req: Request, res: Response) => {
+  throw new ApiError(500, "not implemented");
   res.send({});
 });
 

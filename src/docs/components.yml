@@ -1,13 +1,77 @@
 components:
   schemas:
-    TokenData:
+    TokenizeDataRequest:
       type: object
       additionalProperties: 
         type: string
       example:
-        field-1: value-1
-        field-2: value-2
-        field-n: value-n
+        field-1: value1
+        field-2: value2
+        field-N: valueN
+    DetokenizeDataRequest:
+      type: object
+      additionalProperties: 
+        type: string
+      example:
+        field-1: tokenId1
+        field-2: tokenId2
+        field-N: tokenIdN
+    TokenizeDataResponse:
+      type: object
+      additionalProperties: 
+        type: string
+      example:
+        field-1: tokenId1
+        field-2: tokenId2
+        field-N: tokenIdN
+    DetokenizeDataResponse:
+      type: object
+      additionalProperties: 
+        type: string
+      example:
+        field-1: 
+          found: true
+          value: value1
+          info: null
+        field-2: 
+          found: false
+          value: null
+          info: not allowed
+        field-3: 
+          found: false
+          value: null
+          info: internal error
+        field-n: 
+          found: false
+          value: null
+    LoginResponse:
+      type: object
+      additionalProperties: 
+        type: string
+      example:
+        userId: 123,
+        tokens:
+          access:
+            token: jwt
+            expires: "2024-07-09T13:19:28.393Z"
+    CreateApiKeyRequest:
+      type: object
+      properties: 
+        roles:
+          type: array
+          items:
+            type: string
+      example:
+        roles: ['service', 'serviceReadOnly', 'serviceWriteOnly']
+
+    CreateApiKeyResponse:
+      type: object
+      properties: 
+        apiKey:
+          type: string
+      example:
+        apiKey: '123'
+
     RequestId:
       type: string
       format: uuid
@@ -21,15 +85,6 @@ components:
           type: string
 
   responses:
-    DuplicateEmail:
-      description: Email already taken
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: 400
-            message: Email already taken
     Unauthorized:
       description: Unauthorized
       content:
@@ -57,9 +112,24 @@ components:
           example:
             code: 404
             message: Not found
+    InternalError:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 500
+            message: Internal error
 
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+

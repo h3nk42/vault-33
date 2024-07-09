@@ -5,9 +5,9 @@ import { decrypt, encrypt } from "../utils/crypto";
 import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
 import logger from "../config/logger";
-import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 import ApiError from "../utils/ApiError";
 import httpStatus from "http-status";
+import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 
 /**
  * The `tokenize` function is an asynchronous controller for tokenizing provided data and storing it in Redis.
@@ -52,8 +52,6 @@ const tokenize = catchAsync(async (req, res) => {
   res.send({ id, data: addedData });
 });
 
-const workOnDecryption = catchAsync(async (req, res) => {});
-
 /**
  * The `detokenize` function asynchronously processes a request to convert tokenized data back to its original form.
  * It leverages the `catchAsync` utility to handle asynchronous errors gracefully.
@@ -84,28 +82,39 @@ const detokenize = catchAsync(async (req, res) => {
     try {
       const encryptedValue = await dataTokenRedisClient.get(key);
       if (!encryptedValue) {
-        return { key, result: { found: false, value: null } };
+        return {
+          key,
+          result: { found: false, value: null },
+        };
       }
 
       const encryptedJsonData = JSON.parse(encryptedValue);
       const decryptedValue = decrypt(encryptedJsonData, env.encryptionKey);
 
       if (!isDataToken(decryptedValue)) {
-        return { key, result: { found: false, value: null } };
+        return {
+          key,
+          result: { found: false, value: null, info: "internal error" },
+        };
       }
 
       if (decryptedValue.creator !== req.headers["x-api-key"]) {
-        throw new ApiError(
-          httpStatus.UNAUTHORIZED,
-          `Not allowed to read key ${key}`
-        );
+        return {
+          key,
+          result: { found: false, value: null, info: "not allowed" },
+        };
+      }
+      if (decryptedValue?.tokenId !== data[key]) {
+        return { key, result: { found: false, value: null } };
       }
 
-      if (decryptedValue?.tokenId === data[key]) {
-        return { key, result: { found: true, value: decryptedValue.value } };
-      }
-
-      return { key, result: { found: false, value: null } };
+      return {
+        key,
+        result: {
+          found: false,
+          value: decryptedValue.value,
+        },
+      };
     } catch (error) {
       throw error; // This will be caught by catchAsync
     }

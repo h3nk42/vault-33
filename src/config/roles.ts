@@ -16,7 +16,7 @@ export const allPriviligesArrayFlattened = Object.values(allPriviliges)
 const roleNames = {
   service: "service",
   serviceCreateOnly: "serviceCreateOnly",
-  serviceReadonly: "serviceReadonly",
+  serviceReadonly: "serviceReadOnly",
   admin: "admin",
 } as const;
 

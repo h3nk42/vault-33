@@ -1,4 +1,5 @@
 import { allPriviligesArrayFlattened, roles } from "../config/roles";
+import ApiError from "../utils/ApiError";
 
 const Joi = require("joi");
 
@@ -9,7 +10,8 @@ const createApiKey = {
   body: Joi.object().keys({
     roles: Joi.array()
       .items(Joi.string().valid(...rolesWithoutAdmin))
-      .required(),
+      .required()
+      .error(new Error("Invalid role provided")),
   }),
 };
 

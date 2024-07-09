@@ -17,11 +17,13 @@ const validate =
     const { value, error } = Joi.compile(Joi.object(validSchema))
       .prefs({ errors: { label: "key" }, abortEarly: false })
       .validate(object);
-
     if (error) {
-      const errorMessage = error.details
-        .map((details) => details.message)
+      let errorMessage = error.details
+        ?.map((details) => details.message)
         .join(", ");
+      if (!errorMessage) {
+        errorMessage = error.message;
+      }
       return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
     }
     Object.assign(req, value);
