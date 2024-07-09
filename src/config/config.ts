@@ -15,6 +15,10 @@ const envVarsSchema = Joi.object()
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30),
     ADMIN_ID: Joi.string().required().description("Admin ID"),
     ADMIN_PASSWORD: Joi.string().required().description("Admin password"),
+    ADMIN_ID_TEST: Joi.string().required().description("Admin ID"),
+    ADMIN_PASSWORD_TEST: Joi.string().required().description("Admin password"),
+    REDIS_URL: Joi.string().required().description("Redis url"),
+    REDIS_URL_TEST: Joi.string().required().description("Redis url"),
   })
   .unknown();
 
@@ -31,7 +35,14 @@ export const env = {
     accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
   },
   admin: {
-    id: envVars.ADMIN_ID,
-    password: envVars.ADMIN_PASSWORD,
+    id: envVars.NODE_ENV === "test" ? envVars.ADMIN_ID_TEST : envVars.ADMIN_ID,
+    password:
+      envVars.NODE_ENV === "test"
+        ? envVars.ADMIN_PASSWORD_TEST
+        : envVars.ADMIN_PASSWORD,
+  },
+  redis: {
+    url:
+      envVars.NODE_ENV === "test" ? envVars.REDIS_URL_TEST : envVars.REDIS_URL,
   },
 };

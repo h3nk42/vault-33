@@ -3,7 +3,7 @@ import { tokenValidation } from "../../validations/token.validation";
 import { tokenController } from "../../controllers/dataToken.controllers";
 import { validate } from "../../middlewares/validate";
 import { authApiKey } from "../../middlewares/auth/authApiKey";
-import { allPriviliges } from "../../config/roles";
+import { allPriviliges } from "../../config/roles.config";
 
 const dataTokenRouter = express.Router();
 

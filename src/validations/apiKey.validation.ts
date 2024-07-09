@@ -1,5 +1,4 @@
-import { allPriviligesArrayFlattened, roles } from "../config/roles";
-import ApiError from "../utils/ApiError";
+import { roles } from "../config/roles.config";
 
 const Joi = require("joi");
 

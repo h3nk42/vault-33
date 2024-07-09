@@ -1,8 +1,9 @@
 import passport from "passport";
 import httpStatus from "http-status";
 import ApiError from "../../utils/ApiError";
-import { roleDefinitions } from "../../config/roles";
+import { roleDefinitions } from "../../config/roles.config";
 import { NextFunction, Request, Response } from "express";
+import { passportStrategyNames } from "../../config/passport.config";
 
 /**
  * A callback function used by Passport to verify the authentication and authorization of a user.
@@ -63,7 +64,7 @@ export const authJWT = (...requiredPriviliges: string[]) => {
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       passport.authenticate(
-        "jwt",
+        passportStrategyNames.jwt,
         { session: false },
         checkRolesJWT(req, resolve, reject, requiredPriviliges)
       )(req, res, next);

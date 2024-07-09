@@ -1,6 +1,7 @@
 import app, { redisClients } from "./app";
-import logger from "./config/logger";
+import logger from "./config/logger.config";
 import { env } from "./config/config";
+import { getKeys } from "./utils/getKeys";
 
 let server;
 
@@ -14,8 +15,9 @@ const exitHandler = () => {
     server.close(async () => {
       logger.info("Server closed");
       // Disconnect from Redis when the server closes
-      redisClients.apiKey.disconnect();
-      redisClients.dataToken.disconnect();
+      getKeys(redisClients).forEach(async (clientName) => {
+        redisClients[clientName].disconnect();
+      });
 
       process.exit(1);
     });
@@ -37,7 +39,7 @@ process.on("SIGTERM", async () => {
   if (server) {
     server.close();
   }
-  // Ensure Redis client disconnects on SIGTERM
-  redisClients.apiKey.disconnect();
-  redisClients.dataToken.disconnect();
+  getKeys(redisClients).forEach(async (clientName) => {
+    redisClients[clientName].disconnect();
+  });
 });

@@ -1,8 +1,9 @@
 import passport from "passport";
 import httpStatus from "http-status";
 import ApiError from "../../utils/ApiError";
-import { Role, roleDefinitions } from "../../config/roles";
+import { Role, roleDefinitions } from "../../config/roles.config";
 import { NextFunction, Request, Response } from "express";
+import { passportStrategyNames } from "../../config/passport.config";
 
 type VerifyCallback = (
   req: Request,
@@ -44,7 +45,7 @@ export const authApiKey = (...requiredPriviliges: string[]) => {
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       passport.authenticate(
-        "api-key",
+        passportStrategyNames.apiKey,
         { session: false },
         checkPriviligesApiKey(req, resolve, reject, requiredPriviliges)
       )(req, res, next);

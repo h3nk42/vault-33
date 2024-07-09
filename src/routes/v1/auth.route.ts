@@ -36,7 +36,7 @@ authRouter.post("/login", validate(authValidation.login), authController.login);
  *                 type: string
  *
  *     responses:
- *       "201":
+ *       "200":
  *         description: Log in success
  *         content:
  *           application/json:

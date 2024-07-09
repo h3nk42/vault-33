@@ -3,7 +3,7 @@ import { validate } from "../../middlewares/validate";
 import { apiKeyValidation } from "../../validations/apiKey.validation";
 import { apiKeyController } from "../../controllers/apiKey.controller";
 import { authJWT } from "../../middlewares/auth/authJWT";
-import { allPriviliges } from "../../config/roles";
+import { allPriviliges } from "../../config/roles.config";
 
 export const apiKeyRouter = express.Router();
 

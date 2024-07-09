@@ -1,5 +1,5 @@
 import { Moment } from "moment";
-import { AuthTokenType, authTokenTypes } from "../config/token";
+import { AuthTokenType, authTokenTypes } from "../config/token.config";
 import { env } from "../config/config";
 import moment from "moment";
 import jwt from "jsonwebtoken";

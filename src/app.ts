@@ -1,46 +1,31 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import helmet from "helmet";
 import routes from "./routes/v1";
 import httpStatus from "http-status";
 import ApiError from "./utils/ApiError";
 import { errorConverter, errorHandler } from "./middlewares/error";
-import { createClient } from "redis";
-import logger from "./config/logger";
 import passport from "passport";
-import { apiKeyStrategy, jwtStrategy } from "./config/passport";
-import { redisClientNames } from "./config/redis.config";
-
-const dataTokenRedisClient = createClient({
-  url: "redis://localhost:6379", // Update this with your Redis server URL
-  database: 0,
-});
-
-dataTokenRedisClient.on("error", (err) =>
-  logger.error("Redis Client Error", err)
-);
-dataTokenRedisClient.on("connect", () => logger.info("Connected to Redis"));
-
-const apiKeyRedisClient = createClient({
-  url: "redis://localhost:6379", // Update this with your Redis server URL
-  database: 1,
-});
-
-export const redisClients = {
-  [redisClientNames.dataToken]: dataTokenRedisClient,
-  [redisClientNames.apiKey]: apiKeyRedisClient,
-};
-
-apiKeyRedisClient.on("error", (err) => logger.error("Redis Client Error", err));
-apiKeyRedisClient.on("connect", () => logger.info("Connected to Redis"));
-
-// Connect to Redis
-(async () => {
-  await dataTokenRedisClient.connect();
-  await apiKeyRedisClient.connect();
-})();
+import {
+  apiKeyStrategy,
+  jwtStrategy,
+  passportStrategyNames,
+} from "./config/passport.config";
+import { apiLimiter } from "./config/apiLimiter.config";
+import { createClient } from "redis";
+import { env } from "./config/config";
+import logger from "./config/logger.config";
+import {
+  redisClientNames,
+  redisDatabaseIndex,
+  RedisClientName,
+} from "./config/redis.config";
+import { getKeys } from "./utils/getKeys";
 
 // Create an instance of Express
 const app = express();
+
+// Apply rate limiter to all requests
+app.use(apiLimiter);
 
 // set security HTTP headers
 app.use(helmet());
@@ -53,8 +38,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // jwt authentication
 app.use(passport.initialize());
-passport.use("jwt", jwtStrategy);
-passport.use("api-key", apiKeyStrategy);
+passport.use(passportStrategyNames.jwt, jwtStrategy);
+passport.use(passportStrategyNames.apiKey, apiKeyStrategy);
 
 // v1 api routes
 app.use("/v1", routes);
@@ -69,5 +54,27 @@ app.use(errorConverter);
 
 // handle error
 app.use(errorHandler);
+
+console.log(env.redis.url);
+export const redisClients = {
+  [redisClientNames.dataToken]: createClient({
+    url: env.redis.url,
+    database: redisDatabaseIndex.dataToken,
+  }),
+  [redisClientNames.apiKey]: createClient({
+    url: env.redis.url,
+    database: redisDatabaseIndex.apiKey,
+  }),
+} as const;
+
+getKeys(redisClients).forEach(async (clientName) => {
+  redisClients[clientName].on("error", (err) =>
+    logger.error("Redis Client Error: " + clientName, err)
+  );
+  redisClients[clientName].on("connect", () =>
+    logger.info("Connected to Redis:" + clientName)
+  );
+  await redisClients[clientName as RedisClientName].connect();
+});
 
 export default app;

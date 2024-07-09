@@ -2,7 +2,7 @@ import catchAsync from "../utils/catchAsync";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
-import logger from "../config/logger";
+import logger from "../config/logger.config";
 import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 import { redisUtils } from "../utils/redis.utils";
 import { redisClientNames } from "../config/redis.config";

@@ -7,10 +7,10 @@ import {
 
 import { Strategy as CustomStrategy } from "passport-custom";
 import { env } from "./config";
-import { authTokenTypes } from "./token";
+import { authTokenTypes } from "./token.config";
 import { AuthTokenPayload } from "../services/authToken.service";
 import { Request } from "express";
-import { Role, roles } from "./roles";
+import { Role, roles } from "./roles.config";
 import { redisUtils } from "../utils/redis.utils";
 import { redisClientNames } from "./redis.config";
 
@@ -18,6 +18,11 @@ const jwtOptions: StrategyOptionsWithoutRequest = {
   secretOrKey: env.jwt.secret,
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 };
+
+export const passportStrategyNames = {
+  jwt: "jwt",
+  apiKey: "api-key",
+} as const;
 
 const jwtVerify = async (payload: AuthTokenPayload, done: VerifiedCallback) => {
   try {
