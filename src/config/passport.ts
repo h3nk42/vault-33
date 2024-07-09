@@ -10,9 +10,9 @@ import { env } from "./config";
 import { authTokenTypes } from "./token";
 import { AuthTokenPayload } from "../services/authToken.service";
 import { Request } from "express";
-import { apiKeyRedisClient } from "../app";
-import { decrypt, hash } from "../utils/crypto";
 import { Role, roles } from "./roles";
+import { redisUtils } from "../utils/redis.utils";
+import { redisClientNames } from "./redis.config";
 
 const jwtOptions: StrategyOptionsWithoutRequest = {
   secretOrKey: env.jwt.secret,
@@ -45,16 +45,11 @@ export const apiKeyStrategy = new CustomStrategy(
     if (!apiKey || typeof apiKey !== "string") {
       return done(null, false, { message: "Unauthorized" });
     }
-    // get roles from redis
-    const rolesEncrypted = await apiKeyRedisClient.get(hash(apiKey));
-    if (!rolesEncrypted) {
-      return done(null, false, { message: "Unauthorized" });
-    }
-    const rolesEncryptedJson = JSON.parse(rolesEncrypted) as {
-      iv: string;
-      encryptedData: string;
-    };
-    const rolesDecrypted = decrypt(rolesEncryptedJson, env.encryptionKey);
+    const rolesDecrypted = await redisUtils.retrieveHashedAndDecrypt(
+      apiKey,
+      env.encryptionKey,
+      redisClientNames.apiKey
+    );
     if (!isObjectWithRoles(rolesDecrypted)) {
       return done(null, false, { message: "Unauthorized" });
     }

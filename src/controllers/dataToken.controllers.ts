@@ -1,13 +1,11 @@
-import { dataTokenRedisClient } from "../app";
 import catchAsync from "../utils/catchAsync";
 import { v4 as uuidv4 } from "uuid";
-import { decrypt, encrypt } from "../utils/crypto";
 import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
 import logger from "../config/logger";
-import ApiError from "../utils/ApiError";
-import httpStatus from "http-status";
 import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
+import { redisUtils } from "../utils/redis.utils";
+import { redisClientNames } from "../config/redis.config";
 
 /**
  * The `tokenize` function is an asynchronous controller for tokenizing provided data and storing it in Redis.
@@ -42,8 +40,12 @@ const tokenize = catchAsync(async (req, res) => {
       value: data[key],
       creator: apiKey,
     };
-    const encryptedTokenData = encrypt(tokenDataForStore, env.encryptionKey);
-    await dataTokenRedisClient.set(key, JSON.stringify(encryptedTokenData));
+    await redisUtils.storeAndEncrypt(
+      key,
+      tokenDataForStore,
+      env.encryptionKey,
+      redisClientNames.dataToken
+    );
     logger.debug(`Stored tokenized data for key ${key}`);
     addedData[key] = tokenId;
   });
@@ -80,24 +82,23 @@ const detokenize = catchAsync(async (req, res) => {
   const retrievedData: { [key: string]: { found: boolean; value: any } } = {};
   const decryptionTasks = Object.keys(data).map(async (key) => {
     try {
-      const encryptedValue = await dataTokenRedisClient.get(key);
-      if (!encryptedValue) {
+      const decryptedValue = await redisUtils.retrieveAndDecrypt(
+        key,
+        env.encryptionKey,
+        redisClientNames.dataToken
+      );
+      if (!decryptedValue) {
         return {
           key,
           result: { found: false, value: null },
         };
       }
-
-      const encryptedJsonData = JSON.parse(encryptedValue);
-      const decryptedValue = decrypt(encryptedJsonData, env.encryptionKey);
-
       if (!isDataToken(decryptedValue)) {
         return {
           key,
           result: { found: false, value: null, info: "internal error" },
         };
       }
-
       if (decryptedValue.creator !== req.headers["x-api-key"]) {
         return {
           key,
@@ -107,7 +108,6 @@ const detokenize = catchAsync(async (req, res) => {
       if (decryptedValue?.tokenId !== data[key]) {
         return { key, result: { found: false, value: null } };
       }
-
       return {
         key,
         result: {

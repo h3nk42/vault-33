@@ -8,8 +8,9 @@ import { createClient } from "redis";
 import logger from "./config/logger";
 import passport from "passport";
 import { apiKeyStrategy, jwtStrategy } from "./config/passport";
+import { redisClientNames } from "./config/redis.config";
 
-export const dataTokenRedisClient = createClient({
+const dataTokenRedisClient = createClient({
   url: "redis://localhost:6379", // Update this with your Redis server URL
   database: 0,
 });
@@ -19,10 +20,15 @@ dataTokenRedisClient.on("error", (err) =>
 );
 dataTokenRedisClient.on("connect", () => logger.info("Connected to Redis"));
 
-export const apiKeyRedisClient = createClient({
+const apiKeyRedisClient = createClient({
   url: "redis://localhost:6379", // Update this with your Redis server URL
   database: 1,
 });
+
+export const redisClients = {
+  [redisClientNames.dataToken]: dataTokenRedisClient,
+  [redisClientNames.apiKey]: apiKeyRedisClient,
+};
 
 apiKeyRedisClient.on("error", (err) => logger.error("Redis Client Error", err));
 apiKeyRedisClient.on("connect", () => logger.info("Connected to Redis"));
