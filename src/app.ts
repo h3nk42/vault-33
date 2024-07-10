@@ -55,7 +55,6 @@ app.use(errorConverter);
 // handle error
 app.use(errorHandler);
 
-console.log(env.redis.url);
 export const redisClients = {
   [redisClientNames.dataToken]: createClient({
     url: env.redis.url,
