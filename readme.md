@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is designed to showcase a comprehensive backend system with functionalities including API key management, tokenization services, and integration with external data sources. It's built with modern development practices in mind, aiming to provide a robust solution for managing secure data transactions.
+This project is designed to showcase a comprehensive backend system with functionalities including API key management and a tokenization service. It's built with modern development practices in mind, aiming to provide a robust solution for managing secure data transactions.
 
 ## Getting Started
 

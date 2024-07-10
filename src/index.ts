@@ -7,7 +7,7 @@ let server;
 
 // Start the Express server
 server = app.listen(env.port, () => {
-  console.log(`Server is running on port ${env.port}`);
+  logger.info(`Server is running on port ${env.port}`);
 });
 
 const exitHandler = () => {

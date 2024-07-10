@@ -97,14 +97,12 @@ describe("DataToken routes", () => {
 
   describe("POST " + detokenizeUrl, () => {
     test("should return 200 - created token", async () => {
-      console.log(detokenizeRequestBody);
       await request(app)
         .post(detokenizeUrl)
         .set("x-api-key", apiKeyService)
         .send(detokenizeRequestBody)
         .expect(200)
         .expect((response) => {
-          console.log(response.body);
           const { id, data } = response.body;
           expect(id).toBe(detokenizeRequestBody.id);
           expect(data).toHaveProperty("field2");
