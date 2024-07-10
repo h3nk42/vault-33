@@ -23,9 +23,4 @@ const createApiKey = catchAsync(async (req: Request, res: Response) => {
   res.status(201).send({ apiKey });
 });
 
-const deleteApiKey = catchAsync(async (req: Request, res: Response) => {
-  throw new ApiError(500, "not implemented");
-  res.send({});
-});
-
-export const apiKeyController = { createApiKey, deleteApiKey };
+export const apiKeyController = { createApiKey };

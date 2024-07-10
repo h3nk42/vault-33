@@ -14,13 +14,6 @@ apiKeyRouter.post(
   apiKeyController.createApiKey
 );
 
-apiKeyRouter.post(
-  "/delete",
-  validate(apiKeyValidation.deleteApiKey),
-  authJWT(allPriviliges.apiKey.deleteApiKey),
-  apiKeyController.deleteApiKey
-);
-
 /**
  * @swagger
  * tags:

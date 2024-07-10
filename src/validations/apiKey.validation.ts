@@ -16,13 +16,6 @@ const createApiKey = {
 
 export type CreateApiKeyBody = { roles: rolesWithoutAdmin };
 
-const deleteApiKey = {
-  body: Joi.object().keys({
-    apiKey: Joi.string().required(),
-  }),
-};
-
 export const apiKeyValidation = {
   createApiKey,
-  deleteApiKey,
 };
