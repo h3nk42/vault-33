@@ -20,7 +20,7 @@ const createApiKey = catchAsync(async (req: Request, res: Response) => {
     env.encryptionKey,
     redisClientNames.apiKey
   );
-  res.send({ apiKey });
+  res.status(201).send({ apiKey });
 });
 
 const deleteApiKey = catchAsync(async (req: Request, res: Response) => {

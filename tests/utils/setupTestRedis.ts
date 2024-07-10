@@ -2,7 +2,7 @@ import { redisClients } from "../../src/app";
 import { getKeys } from "../../src/utils/getKeys";
 
 export const setupTestDB = () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     // flush redis
     const clientNames = getKeys(redisClients);
     await Promise.all(
@@ -14,6 +14,11 @@ export const setupTestDB = () => {
 
   afterAll(async () => {
     const clientNames = getKeys(redisClients);
+    await Promise.all(
+      clientNames.map(async (clientName) => {
+        await redisClients[clientName].flushAll();
+      })
+    );
     await Promise.all(
       clientNames.map(async (clientName) => {
         await redisClients[clientName].disconnect();

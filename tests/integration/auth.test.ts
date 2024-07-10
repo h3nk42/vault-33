@@ -1,4 +1,3 @@
-import httpStatus from "http-status";
 import { setupTestDB } from "../utils/setupTestRedis";
 import request from "supertest";
 import app from "../../src/app";
@@ -19,7 +18,7 @@ describe("Auth routes", () => {
   });
 
   describe("POST /v1/auth/login", () => {
-    test("should return 201 - correct credentials", async () => {
+    test("should return 200 - correct credentials", async () => {
       await request(app)
         .post("/v1/auth/login")
         .send(loginRequestBody)

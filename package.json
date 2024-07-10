@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "test": "jest",
+    "test:dataToken": "jest tests/integration/dataToken.test.ts",
     "watch:build": "tsc --watch",
     "build": "tsc",
     "watch:server": "nodemon './dist/index.js' --watch './dist'",

@@ -3,9 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
 import logger from "../config/logger.config";
-import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
+import { DataTokenInStore, isDataTokens } from "../models/dataToken.model";
 import { redisUtils } from "../utils/redis.utils";
 import { redisClientNames } from "../config/redis.config";
+import { getKeys } from "../utils/getKeys";
 
 /**
  * The `tokenize` function is an asynchronous controller for tokenizing provided data and storing it in Redis.
@@ -33,16 +34,23 @@ const tokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body as TokenizeBody;
   const addedData: { [key: string]: any } = {};
   const apiKey = req.headers["x-api-key"] as string;
-  const operations = Object.keys(data).map(async (key) => {
+  const tokensFromStore =
+    (await redisUtils.retrieveHashedAndDecrypt(
+      apiKey,
+      env.encryptionKey,
+      redisClientNames.dataToken
+    )) || {};
+  if (!isDataTokens(tokensFromStore)) {
+    throw new Error("Internal error: Invalid token data structure.");
+  }
+  const operations = getKeys(data).map(async (key) => {
     const tokenId = uuidv4();
-    const tokenDataForStore: DataTokenInStore = {
-      tokenId,
-      value: data[key],
-      creator: apiKey,
-    };
-    await redisUtils.storeAndEncrypt(
-      key,
-      tokenDataForStore,
+    const newToken: DataTokenInStore = { tokenId, value: data[key] };
+    tokensFromStore[key] = newToken;
+
+    await redisUtils.storeHashedAndEncrypt(
+      apiKey,
+      tokensFromStore,
       env.encryptionKey,
       redisClientNames.dataToken
     );
@@ -51,7 +59,7 @@ const tokenize = catchAsync(async (req, res) => {
   });
   await Promise.all(operations);
 
-  res.send({ id, data: addedData });
+  res.status(201).send({ id, data: addedData });
 });
 
 /**
@@ -79,51 +87,53 @@ const tokenize = catchAsync(async (req, res) => {
  */
 const detokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body as TokenizeBody;
-  const retrievedData: { [key: string]: { found: boolean; value: any } } = {};
-  const decryptionTasks = Object.keys(data).map(async (key) => {
-    try {
-      const decryptedValue = await redisUtils.retrieveAndDecrypt(
-        key,
-        env.encryptionKey,
-        redisClientNames.dataToken
-      );
-      if (!decryptedValue) {
-        return {
-          key,
-          result: { found: false, value: null },
-        };
-      }
-      if (!isDataToken(decryptedValue)) {
-        return {
-          key,
-          result: { found: false, value: null, info: "internal error" },
-        };
-      }
-      if (decryptedValue.creator !== req.headers["x-api-key"]) {
-        return {
-          key,
-          result: { found: false, value: null, info: "not allowed" },
-        };
-      }
-      if (decryptedValue?.tokenId !== data[key]) {
+  const retrievedData: Record<
+    string,
+    { found: boolean; value?: any; info?: string }
+  > = {};
+  const apiKey = req.headers["x-api-key"] as string;
+  const decryptedValue = await redisUtils.retrieveHashedAndDecrypt(
+    apiKey,
+    env.encryptionKey,
+    redisClientNames.dataToken
+  );
+  if (!decryptedValue) {
+    // If there's no data, respond for all keys as not found
+    Object.keys(data).forEach((key) => {
+      retrievedData[key] = { found: false, value: null };
+    });
+    res.send({ id, data: retrievedData });
+  } else if (!isDataTokens(decryptedValue)) {
+    // If data is invalid, respond 500
+    throw new Error("Internal error: Invalid token data structure.");
+  } else {
+    // Process each key only if decryptedValue is valid
+    const decryptionTasks = Object.keys(data).map(async (key) => {
+      if (!decryptedValue[key]) {
         return { key, result: { found: false, value: null } };
       }
+      if (decryptedValue[key].tokenId !== data[key]) {
+        // Include mismatch information in the response
+        return {
+          key,
+          result: { found: false, value: null, info: "token id mismatch" },
+        };
+      }
+      // Correctly mark as found
       return {
         key,
         result: {
-          found: false,
-          value: decryptedValue.value,
+          found: true,
+          value: decryptedValue[key].value,
         },
       };
-    } catch (error) {
-      throw error; // This will be caught by catchAsync
-    }
-  });
+    });
 
-  const results = await Promise.all(decryptionTasks);
-  results.forEach(({ key, result }) => {
-    retrievedData[key] = result;
-  });
+    const results = await Promise.all(decryptionTasks);
+    results.forEach(({ key, result }) => {
+      retrievedData[key] = result;
+    });
+  }
 
   res.send({ id, data: retrievedData });
 });

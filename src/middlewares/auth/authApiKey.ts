@@ -4,6 +4,7 @@ import ApiError from "../../utils/ApiError";
 import { Role, roleDefinitions } from "../../config/roles.config";
 import { NextFunction, Request, Response } from "express";
 import { passportStrategyNames } from "../../config/passport.config";
+import logger from "../../config/logger.config";
 
 type VerifyCallback = (
   req: Request,
@@ -20,6 +21,7 @@ const checkPriviligesApiKey: VerifyCallback =
       );
     }
     const rolesTyped = roles as Role[];
+
     if (requiredPriviliges.length) {
       const apiKeyPriviliges = rolesTyped
         .map((role: Role) => roleDefinitions[role])
