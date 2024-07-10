@@ -28,7 +28,7 @@ apiKeyRouter.post(
  *     summary: Create api keys for services.
  *     tags: [ApiKey]
  *     security:
- *       - apiKeyAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:

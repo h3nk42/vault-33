@@ -31,12 +31,12 @@ export default dataTokenRouter;
 
 /**
  * @swagger
- * /token/tokenize:
+ * /dataToken/tokenize:
  *   post:
  *     summary: Post data as a token
  *     tags: [DataToken]
  *     security:
- *       - bearerAuth: []
+ *       - apiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -108,12 +108,12 @@ export default dataTokenRouter;
 
 /**
  * @swagger
- * /token/detokenize:
+ * /dataToken/detokenize:
  *   post:
  *     summary: Retrieve the data of previously tokenized data
  *     tags: [DataToken]
  *     security:
- *       - bearerAuth: []
+ *       - apiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
