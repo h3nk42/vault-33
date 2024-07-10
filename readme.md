@@ -35,3 +35,5 @@ REDIS_URL_TEST=redis://localhost:6379
 ```
 
 4. **Start the process via `npm start`**
+
+After starting the application, you can access the Swagger documentation at [v1/docs](http://localhost:3000/v1/docs/) to explore the available API endpoints and their specifications.
