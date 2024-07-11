@@ -48,7 +48,7 @@ export const decrypt = (
 ): object | string => {
   const secretKeyBuffer = Buffer.from(secretKey, "hex");
   const decipher = createDecipheriv(
-    "aes-256-cgc",
+    "aes-256-cbc",
     secretKeyBuffer,
     Buffer.from(encryptedObject.iv, "hex")
   );

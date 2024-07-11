@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { env } from "../config/config";
 import { TokenizeBody } from "../validations/token.validation";
 import logger from "../config/logger.config";
-import { DataTokenInStore, isDataTokens } from "../models/dataToken.model";
+import { DataTokenInStore, isDataToken } from "../models/dataToken.model";
 import { redisUtils } from "../utils/redis.utils";
 import { redisClientNames } from "../config/redis.config";
 import { getKeys } from "../utils/getKeys";
@@ -34,28 +34,24 @@ const tokenize = catchAsync(async (req, res) => {
   const { id, data } = req.body as TokenizeBody;
   const addedData: { [key: string]: any } = {};
   const apiKey = req.headers["x-api-key"] as string;
-  const tokensFromStore =
-    (await redisUtils.retrieveHashedAndDecrypt(
-      apiKey,
-      env.encryptionKey,
-      redisClientNames.dataToken
-    )) || {};
-  if (!isDataTokens(tokensFromStore)) {
-    throw new Error("Internal error: Invalid token data structure.");
-  }
-  const operations = getKeys(data).map(async (key) => {
+
+  const operations = getKeys(data).map(async (fieldName) => {
     const tokenId = uuidv4();
-    const newToken: DataTokenInStore = { tokenId, value: data[key] };
-    tokensFromStore[key] = newToken;
+    const newToken: DataTokenInStore = {
+      tokenId,
+      value: data[fieldName],
+      creatorId: apiKey,
+      fieldName: fieldName as string,
+    };
 
     await redisUtils.storeHashedAndEncrypt(
-      apiKey,
-      tokensFromStore,
+      tokenId,
+      newToken,
       env.encryptionKey,
       redisClientNames.dataToken
     );
-    logger.debug(`Stored tokenized data for key ${key}`);
-    addedData[key] = tokenId;
+    logger.debug(`Stored tokenized data for key ${fieldName}`);
+    addedData[fieldName] = tokenId;
   });
   await Promise.all(operations);
 
@@ -92,48 +88,58 @@ const detokenize = catchAsync(async (req, res) => {
     { found: boolean; value?: any; info?: string }
   > = {};
   const apiKey = req.headers["x-api-key"] as string;
-  const decryptedValue = await redisUtils.retrieveHashedAndDecrypt(
-    apiKey,
-    env.encryptionKey,
-    redisClientNames.dataToken
-  );
-  if (!decryptedValue) {
-    // If there's no data, respond for all keys as not found
-    Object.keys(data).forEach((key) => {
-      retrievedData[key] = { found: false, value: null };
-    });
-    res.send({ id, data: retrievedData });
-  } else if (!isDataTokens(decryptedValue)) {
-    // If data is invalid, respond 500
-    throw new Error("Internal error: Invalid token data structure.");
-  } else {
-    // Process each key only if decryptedValue is valid
-    const decryptionTasks = Object.keys(data).map(async (key) => {
-      if (!decryptedValue[key]) {
-        return { key, result: { found: false, value: null } };
-      }
-      if (decryptedValue[key].tokenId !== data[key]) {
-        // Include mismatch information in the response
+  const decryptionTasks = getKeys(data).map(async (fieldName) => {
+    const dataToken = await redisUtils.retrieveHashedAndDecrypt(
+      data[fieldName],
+      env.encryptionKey,
+      redisClientNames.dataToken
+    );
+    if (!isDataToken(dataToken)) {
+      return {
+        key: fieldName,
+        result: { found: false, value: null, info: "Internal Error" },
+      };
+    }
+    if (!dataToken) {
+      // If there's no data, respond as not found
+      return { key: fieldName, result: { found: false, value: null } };
+    } else {
+      if (dataToken.creatorId !== apiKey) {
         return {
-          key,
-          result: { found: false, value: null, info: "token id mismatch" },
+          key: fieldName,
+          result: {
+            found: false,
+            value: null,
+            info: "You're not the creator of this token.",
+          },
+        };
+      }
+
+      if (dataToken.fieldName !== fieldName) {
+        return {
+          key: fieldName,
+          result: {
+            found: false,
+            value: null,
+            info: "Mismatch field name - tokenId",
+          },
         };
       }
       // Correctly mark as found
       return {
-        key,
+        key: fieldName,
         result: {
           found: true,
-          value: decryptedValue[key].value,
+          value: dataToken.value, // Assuming this is the correct way to access the decrypted value
         },
       };
-    });
+    }
+  });
 
-    const results = await Promise.all(decryptionTasks);
-    results.forEach(({ key, result }) => {
-      retrievedData[key] = result;
-    });
-  }
+  const results = await Promise.all(decryptionTasks);
+  results.forEach(({ key, result }) => {
+    retrievedData[key] = result;
+  });
 
   res.send({ id, data: retrievedData });
 });

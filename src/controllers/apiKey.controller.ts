@@ -2,7 +2,7 @@ import catchAsync from "../utils/catchAsync";
 
 import { Request, Response } from "express";
 import { CreateApiKeyBody } from "../validations/apiKey.validation";
-import { v4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { env } from "../config/config";
 import ApiError from "../utils/ApiError";
 import { redisUtils } from "../utils/redis.utils";
@@ -12,7 +12,7 @@ const createApiKey = catchAsync(async (req: Request, res: Response) => {
   const { roles } = req.body as CreateApiKeyBody;
 
   // create api key
-  const apiKey = v4();
+  const apiKey = uuidv4();
   const roleData = { roles };
   await redisUtils.storeHashedAndEncrypt(
     apiKey,

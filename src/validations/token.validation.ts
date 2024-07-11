@@ -7,7 +7,7 @@ const tokenize = {
   }),
 };
 
-export type TokenData = { [key: string]: any };
+export type TokenData = { [key: string]: string };
 export type TokenizeBody = {
   id: string;
   data: TokenData;

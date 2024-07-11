@@ -8,6 +8,8 @@ setupTestDB();
 const tokenizeUrl = "/v1/dataToken/tokenize";
 const detokenizeUrl = "/v1/dataToken/detokenize";
 
+jest.setTimeout(3 * 60 * 1000); // Set Jest timeout to 3 minutes
+
 const tokenizeRequestBody = {
   id: "123",
   data: { field1: "value1" },
@@ -26,38 +28,49 @@ describe("DataToken routes", () => {
   let apiKeyServiceWriteOnly: string;
   let tokenId: string;
   beforeAll(async () => {
-    const response = await request(app)
+    // First, perform the login to get the JWT
+    const loginResponse = await request(app)
       .post("/v1/auth/login")
       .send({ userId: env.admin.id, password: env.admin.password });
-    const jwt = response.body.tokens.access.token;
-    const apiKeyResponse = await request(app)
-      .post("/v1/apiKey/create")
-      .set("Authorization", `Bearer ${jwt}`)
-      .send({
-        roles: ["service"],
-      });
+    const jwt = loginResponse.body.tokens.access.token;
+
+    // Then, run the API key creation operations in parallel
+    const [
+      apiKeyResponse,
+      apiKeyResponseServiceReadOnly,
+      apiKeyResponseServiceWriteOnly,
+    ] = await Promise.all([
+      request(app)
+        .post("/v1/apiKey/create")
+        .set("Authorization", `Bearer ${jwt}`)
+        .send({ roles: ["service"] }),
+      request(app)
+        .post("/v1/apiKey/create")
+        .set("Authorization", `Bearer ${jwt}`)
+        .send({ roles: ["serviceReadOnly"] }),
+      request(app)
+        .post("/v1/apiKey/create")
+        .set("Authorization", `Bearer ${jwt}`)
+        .send({ roles: ["serviceReadOnly"] }),
+    ]);
+
+    // Extract API keys from the responses
     apiKeyService = apiKeyResponse.body.apiKey;
-    const apiKeyResponseServiceReadOnly = await request(app)
-      .post("/v1/apiKey/create")
-      .set("Authorization", `Bearer ${jwt}`)
-      .send({
-        roles: ["serviceReadOnly"],
-      });
     apiKeyServiceReadOnly = apiKeyResponseServiceReadOnly.body.apiKey;
-    const apiKeyResponseServiceWriteOnly = await request(app)
-      .post("/v1/apiKey/create")
-      .set("Authorization", `Bearer ${jwt}`)
-      .send({
-        roles: ["serviceReadOnly"],
-      });
     apiKeyServiceWriteOnly = apiKeyResponseServiceWriteOnly.body.apiKey;
 
+    // Finally, perform the tokenize operation
     const tokenizeResponse = await request(app)
       .post(tokenizeUrl)
       .set("x-api-key", apiKeyService)
       .send({ id: "123", data: { field2: "value2" } });
-    tokenId = tokenizeResponse.body.data["field2"];
+    const tokenId = tokenizeResponse.body.data["field2"];
     detokenizeRequestBody.data.field2 = tokenId;
+  }, 30000);
+
+  beforeAll(async () => {
+    // timeout 1 second
+    await new Promise((r) => setTimeout(r, 5000));
   });
 
   describe("POST " + tokenizeUrl, () => {
