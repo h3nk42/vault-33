@@ -26,39 +26,61 @@ describe("DataToken routes", () => {
   let apiKeyService: string;
   let apiKeyServiceReadOnly: string;
   let apiKeyServiceWriteOnly: string;
-  let tokenId: string;
+  let jwt: string;
   beforeAll(async () => {
-    // First, perform the login to get the JWT
     const loginResponse = await request(app)
       .post("/v1/auth/login")
       .send({ userId: env.admin.id, password: env.admin.password });
-    const jwt = loginResponse.body.tokens.access.token;
+    jwt = loginResponse.body.tokens.access.token;
+  });
+  beforeAll(async () => {
+    try {
+      const [
+        apiKeyResponse,
+        apiKeyResponseServiceReadOnly,
+        apiKeyResponseServiceWriteOnly,
+      ] = await Promise.all([
+        request(app)
+          .post("/v1/apiKey/create")
+          .set("Authorization", `Bearer ${jwt}`)
+          .send({ roles: ["service"] }),
+        request(app)
+          .post("/v1/apiKey/create")
+          .set("Authorization", `Bearer ${jwt}`)
+          .send({ roles: ["serviceReadOnly"] }),
+        request(app)
+          .post("/v1/apiKey/create")
+          .set("Authorization", `Bearer ${jwt}`)
+          .send({ roles: ["serviceReadOnly"] }),
+      ]);
 
-    // Then, run the API key creation operations in parallel
-    const [
-      apiKeyResponse,
-      apiKeyResponseServiceReadOnly,
-      apiKeyResponseServiceWriteOnly,
-    ] = await Promise.all([
-      request(app)
-        .post("/v1/apiKey/create")
-        .set("Authorization", `Bearer ${jwt}`)
-        .send({ roles: ["service"] }),
-      request(app)
-        .post("/v1/apiKey/create")
-        .set("Authorization", `Bearer ${jwt}`)
-        .send({ roles: ["serviceReadOnly"] }),
-      request(app)
-        .post("/v1/apiKey/create")
-        .set("Authorization", `Bearer ${jwt}`)
-        .send({ roles: ["serviceReadOnly"] }),
-    ]);
+      // Debugging logs
+      console.log("API Key Response:", apiKeyResponse.body);
+      console.log(
+        "API Key Response Service ReadOnly:",
+        apiKeyResponseServiceReadOnly.body
+      );
+      console.log(
+        "API Key Response Service Write Only:",
+        apiKeyResponseServiceWriteOnly.body
+      );
 
-    // Extract API keys from the responses
-    apiKeyService = apiKeyResponse.body.apiKey;
-    apiKeyServiceReadOnly = apiKeyResponseServiceReadOnly.body.apiKey;
-    apiKeyServiceWriteOnly = apiKeyResponseServiceWriteOnly.body.apiKey;
+      // Extract API keys from the responses
+      apiKeyService = apiKeyResponse.body.apiKey;
+      apiKeyServiceReadOnly = apiKeyResponseServiceReadOnly.body.apiKey;
+      apiKeyServiceWriteOnly = apiKeyResponseServiceWriteOnly.body.apiKey;
 
+      // Ensure variables are defined
+      if (!apiKeyService || !apiKeyServiceReadOnly || !apiKeyServiceWriteOnly) {
+        throw new Error("One or more API keys were not defined.");
+      }
+    } catch (error) {
+      console.error("Error in beforeAll setup:", error);
+      throw error; // Rethrow to ensure Jest is aware of the failure
+    }
+  }, 30000);
+
+  beforeAll(async () => {
     // Finally, perform the tokenize operation
     const tokenizeResponse = await request(app)
       .post(tokenizeUrl)
@@ -66,11 +88,6 @@ describe("DataToken routes", () => {
       .send({ id: "123", data: { field2: "value2" } });
     const tokenId = tokenizeResponse.body.data["field2"];
     detokenizeRequestBody.data.field2 = tokenId;
-  }, 30000);
-
-  beforeAll(async () => {
-    // timeout 1 second
-    await new Promise((r) => setTimeout(r, 5000));
   });
 
   describe("POST " + tokenizeUrl, () => {
